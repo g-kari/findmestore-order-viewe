@@ -17,15 +17,32 @@
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .order-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background-color: #e8e8e8;
-  border-radius: 4px;
-  padding: 2px 8px;
+  border-radius: 6px;
+  padding: 4px 10px 4px 4px;
   color: #333;
-  white-space: nowrap;
+}
+
+/* 商品サムネイル画像 */
+.order-item-image {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background-color: #d0d0d0;
+}
+
+.order-item-name {
+  font-size: 0.9em;
+  line-height: 1.3;
 }
 
 /* ローディング */

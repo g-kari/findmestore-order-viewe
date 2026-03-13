@@ -31,8 +31,9 @@
   // キャッシュヒット分は即座に表示
   const uncached = [];
   for (const order of orders) {
-    if (cached[order.orderNumber]) {
-      updateRow(order.loadingRow, cached[order.orderNumber]);
+    const cachedData = cached[order.orderNumber];
+    if (cachedData && Array.isArray(cachedData)) {
+      updateRow(order.loadingRow, cachedData);
     } else {
       uncached.push(order);
     }
@@ -58,10 +59,10 @@ function getFromCache(keys) {
 /**
  * キャッシュにデータを保存
  * @param {string} key
- * @param {string[]} value
+ * @param {Array<{name: string, imageUrl: string}>} products
  */
-function saveToCache(key, value) {
-  chrome.storage.local.set({ [key]: value });
+function saveToCache(key, products) {
+  chrome.storage.local.set({ [key]: products });
 }
 
 /**
@@ -77,7 +78,7 @@ async function fetchInBatches(orders, concurrency) {
 }
 
 /**
- * 注文詳細ページから商品名を取得してUI更新
+ * 注文詳細ページから商品情報（名前・画像）を取得してUI更新
  * @param {Object} order
  */
 async function fetchOrderItems(order) {
@@ -90,35 +91,70 @@ async function fetchOrderItems(order) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
-    // 商品リンクから商品名を抽出（重複除去）
-    const selectors = [
-      'table a[href*="/products/"]',
-      '.product-name a',
-      '.order-detail__item a[href*="/products/"]',
-      'a[href*="/products/"]',
-    ];
+    const products = extractProducts(doc);
 
-    const seen = new Set();
-    const productNames = [];
-
-    for (const selector of selectors) {
-      const links = doc.querySelectorAll(selector);
-      for (const a of links) {
-        const name = a.textContent.trim();
-        if (name && !seen.has(name)) {
-          seen.add(name);
-          productNames.push(name);
-        }
-      }
-      if (productNames.length > 0) break;
-    }
-
-    saveToCache(orderNumber, productNames);
-    updateRow(loadingRow, productNames);
+    saveToCache(orderNumber, products);
+    updateRow(loadingRow, products);
   } catch (err) {
     console.error(`[FINDME拡張] 注文 ${orderNumber} の取得に失敗:`, err);
     showError(loadingRow, order);
   }
+}
+
+/**
+ * 詳細ページDOMから商品情報（名前・画像URL）を抽出
+ * @param {Document} doc
+ * @returns {Array<{name: string, imageUrl: string}>}
+ */
+function extractProducts(doc) {
+  const seen = new Set();
+  const products = [];
+
+  // 商品リンクを含むtr行を走査（画像と名前を同一行から取得）
+  const productLinkSelectors = [
+    'table a[href*="/products/"]',
+    '.order-detail__item a[href*="/products/"]',
+    '.product-name a',
+    'a[href*="/products/"]',
+  ];
+
+  for (const selector of productLinkSelectors) {
+    const links = doc.querySelectorAll(selector);
+    if (links.length === 0) continue;
+
+    for (const a of links) {
+      const name = a.textContent.trim();
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+
+      // 同じtr内の画像を探す
+      const row = a.closest('tr');
+      let imageUrl = '';
+      if (row) {
+        const img = row.querySelector('img');
+        if (img) {
+          imageUrl = img.src || img.dataset.src || '';
+        }
+      }
+
+      // trが見つからない場合は近傍の親要素から画像を探す
+      if (!imageUrl) {
+        const parent = a.closest('td, li, .line-item, .product');
+        if (parent) {
+          const img = parent.querySelector('img');
+          if (img) {
+            imageUrl = img.src || img.dataset.src || '';
+          }
+        }
+      }
+
+      products.push({ name, imageUrl });
+    }
+
+    if (products.length > 0) break;
+  }
+
+  return products;
 }
 
 /**
@@ -148,23 +184,22 @@ function createLoadingRow(colspan) {
 }
 
 /**
- * 商品名リストで行を更新（DOM操作のみ）
+ * 商品情報リストで行を更新（DOM操作のみ）
  * @param {HTMLTableRowElement} row
- * @param {string[]} productNames
+ * @param {Array<{name: string, imageUrl: string}>} products
  */
-function updateRow(row, productNames) {
+function updateRow(row, products) {
   row.classList.remove('order-items-loading');
   row.classList.add('order-items-loaded');
 
   const cell = row.querySelector('.order-items-cell');
   if (!cell) return;
 
-  // 既存の子要素をクリア
   while (cell.firstChild) {
     cell.removeChild(cell.firstChild);
   }
 
-  if (productNames.length === 0) {
+  if (products.length === 0) {
     const empty = document.createElement('span');
     empty.className = 'order-items-empty';
     empty.textContent = '商品情報なし';
@@ -175,10 +210,28 @@ function updateRow(row, productNames) {
   const ul = document.createElement('ul');
   ul.className = 'order-items-list';
 
-  for (const name of productNames) {
+  for (const product of products) {
     const li = document.createElement('li');
     li.className = 'order-item';
-    li.textContent = name; // textContent でXSSを回避
+
+    if (product.imageUrl) {
+      const img = document.createElement('img');
+      img.className = 'order-item-image';
+      img.src = product.imageUrl;
+      img.alt = product.name;
+      img.loading = 'lazy';
+      // 画像読み込みエラー時は非表示
+      img.addEventListener('error', () => {
+        img.style.display = 'none';
+      });
+      li.appendChild(img);
+    }
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'order-item-name';
+    nameSpan.textContent = product.name;
+    li.appendChild(nameSpan);
+
     ul.appendChild(li);
   }
 
