@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 背景 -->
+  <rect width="128" height="128" rx="24" fill="#1a1a2e"/>
+
+  <!-- ショッピングバッグ本体 -->
+  <rect x="22" y="46" width="70" height="62" rx="6" fill="#e94560"/>
+
+  <!-- バッグの持ち手 -->
+  <path d="M36 46 Q36 24 57 24 Q78 24 78 46" fill="none" stroke="#e94560" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- バッグの線（商品リストを示す横線） -->
+  <line x1="36" y1="68" x2="78" y2="68" stroke="white" stroke-width="4.5" stroke-linecap="round" opacity="0.9"/>
+  <line x1="36" y1="80" x2="68" y2="80" stroke="white" stroke-width="4.5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="36" y1="92" x2="58" y2="92" stroke="white" stroke-width="4.5" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- 虫眼鏡 -->
+  <circle cx="94" cy="88" r="20" fill="#0f3460" stroke="#e94560" stroke-width="4"/>
+  <circle cx="94" cy="88" r="12" fill="none" stroke="#16213e" stroke-width="1"/>
+  <!-- 虫眼鏡のレンズ内のハイライト -->
+  <circle cx="94" cy="88" r="11" fill="#16213e"/>
+  <circle cx="89" cy="83" r="3" fill="white" opacity="0.15"/>
+  <!-- 虫眼鏡の柄 -->
+  <line x1="106" y1="100" x2="118" y2="112" stroke="#e94560" stroke-width="7" stroke-linecap="round"/>
+  <!-- レンズのリム -->
+  <circle cx="94" cy="88" r="12" fill="none" stroke="#e94560" stroke-width="4"/>
+</svg>
