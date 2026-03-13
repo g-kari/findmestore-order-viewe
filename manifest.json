@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "FINDME STORE 注文商品表示",
+  "version": "1.0.0",
+  "description": "FINDME STOREの注文一覧ページに購入商品名をインライン表示します",
+  "permissions": ["storage"],
+  "host_permissions": ["https://findmestore.thinkr.jp/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://findmestore.thinkr.jp/account*"],
+      "js": ["content_script.js"],
+      "css": ["style.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
