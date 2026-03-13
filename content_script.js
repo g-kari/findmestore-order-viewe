@@ -102,9 +102,9 @@ async function fetchOrderItems(order) {
 }
 
 /**
- * 詳細ページDOMから商品情報（名前・画像URL）を抽出
+ * 詳細ページDOMから商品情報（名前・画像URL・商品URL）を抽出
  * @param {Document} doc
- * @returns {Array<{name: string, imageUrl: string}>}
+ * @returns {Array<{name: string, imageUrl: string, productUrl: string}>}
  */
 function extractProducts(doc) {
   const seen = new Set();
@@ -127,6 +127,8 @@ function extractProducts(doc) {
       if (!name || seen.has(name)) continue;
       seen.add(name);
 
+      const productUrl = a.href || '';
+
       // 同じtr内の画像を探す
       const row = a.closest('tr');
       let imageUrl = '';
@@ -148,7 +150,7 @@ function extractProducts(doc) {
         }
       }
 
-      products.push({ name, imageUrl });
+      products.push({ name, imageUrl, productUrl });
     }
 
     if (products.length > 0) break;
@@ -214,6 +216,15 @@ function updateRow(row, products) {
     const li = document.createElement('li');
     li.className = 'order-item';
 
+    // 商品URLがあればa要素で囲んで商品詳細ページへ遷移
+    const inner = product.productUrl ? document.createElement('a') : document.createElement('span');
+    inner.className = 'order-item-inner';
+    if (product.productUrl) {
+      inner.href = product.productUrl;
+      inner.target = '_blank';
+      inner.rel = 'noopener noreferrer';
+    }
+
     if (product.imageUrl) {
       const img = document.createElement('img');
       img.className = 'order-item-image';
@@ -224,14 +235,15 @@ function updateRow(row, products) {
       img.addEventListener('error', () => {
         img.style.display = 'none';
       });
-      li.appendChild(img);
+      inner.appendChild(img);
     }
 
     const nameSpan = document.createElement('span');
     nameSpan.className = 'order-item-name';
     nameSpan.textContent = product.name;
-    li.appendChild(nameSpan);
+    inner.appendChild(nameSpan);
 
+    li.appendChild(inner);
     ul.appendChild(li);
   }
 

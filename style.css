@@ -30,6 +30,24 @@
   color: #333;
 }
 
+/* 商品アイテム内リンク */
+.order-item-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+a.order-item-inner:hover {
+  text-decoration: underline;
+  color: #0066cc;
+}
+
+a.order-item-inner:hover .order-item-image {
+  opacity: 0.85;
+}
+
 /* 商品サムネイル画像 */
 .order-item-image {
   width: 48px;
