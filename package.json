@@ -1,0 +1,14 @@
+{
+  "name": "findmestore-order-viewer",
+  "version": "1.1.0",
+  "private": true,
+  "scripts": {
+    "check": "node --check content_script.js && node --check tests/content_script.test.cjs && node --check tests/browser.test.cjs",
+    "test": "node --test --test-concurrency=1 tests/content_script.test.cjs",
+    "test:browser": "node --test --test-concurrency=1 tests/browser.test.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0",
+    "playwright": "1.62.1"
+  }
+}
