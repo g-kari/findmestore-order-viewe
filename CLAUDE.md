@@ -1,65 +1,65 @@
 # FINDME STORE 注文商品表示 Chrome拡張機能
 
-## プロジェクト概要
+## 概要
 
-FINDME STORE（`findmestore.thinkr.jp`）の注文一覧ページ（`/account`）に、各注文の購入商品名をインライン表示するChrome拡張機能。
+`findmestore.thinkr.jp/account` の注文一覧に、購入商品名・バリエーションと、注文明細に存在する場合のみ商品画像を追加する Manifest V3 拡張。Vanilla JS/CSS、ビルド不要。注文・アカウントの変更や追加APIの利用は行わない。
 
-通常は注文番号・日付・支払い/配送状況・合計金額しか表示されないが、この拡張機能により各注文行の下に商品名が自動表示される。
+## ファイル
 
-## 対象ドメイン
+- `manifest.json`: バージョン、storage と既存FINDMEホストの権限。
+- `content_script.js`: 一覧探索、限定した明細解析、描画、取得キュー、ローカルキャッシュ。
+- `style.css`: 追加する商品行の表示。
+- `tests/fixtures/`: 架空値だけの新旧合成HTML。
+- `tests/content_script.test.cjs`: jsdom 回帰。
+- `tests/browser.test.cjs`: Chromium 回帰。通信は合成レスポンスへ差し替える。
 
-`findmestore.thinkr.jp`
+## DOM構造
 
-## 技術スタック
+### 2026年10月の新画面
 
-- Manifest V3 Chrome拡張機能
-- Vanilla JavaScript（content_script.js）
-- CSS（style.css）
-- chrome.storage.local（キャッシュ）
+- 一覧: `.customer.account table.order-history tbody > tr`
+- 注文リンク: `td[headers~="ColumnOrder"] a[href*="/account/orders/"]`
+- 注文行のセル数から追加行の colspan を決める。観測した画面は5列。
+- 明細: `.customer.order table.order-details tbody > tr`
+- 商品列: `td[headers~="ColumnProduct"]`
+- 商品名リンク: 商品列の `a[href*="/products/"]`（テキストのあるもの）。
+- バリエーション: 商品列の `.properties`。
+- 商品URL: `/products/<handle>?variant=<id>` のような相対URLもある。
+- ページング: `nav.pagination[role="navigation"]`、`/account?page=<page>`。既存リンクは変更しない。
+- 観測した1件の明細には画像要素がなかった。画像のない商品をエラーにしない。
 
-## ファイル構成
+### 旧画面互換
 
+- 一覧: `table.responsive-table tbody > tr`
+- 注文リンク: 行内の `th` / `td` にある同一ホストの `/account/orders/<id>` リンク。
+- 明細: `table.responsive-table` / `table#order_details` / `table.order-details` のうち、「商品 / 商品名 / Product」と「数量 / Quantity」等のヘッダーを持つテーブル、または商品列・数量列の両方を `data-label` で示すテーブルだけを解析。`main` / `#MainContent` があればその内部に限定し、aside / nav / header / footer 内を除外する。
+- 画像は同じ商品行の `img` から取得する。
+- 旧画面の完全な実HTMLは保存していない。既存資料に基づく合成fixtureで互換回帰を行う。
+
+## 取得・安全性
+
+- 詳細ページのみ同一originへ `fetch` + `credentials: include`。最大3並列、15秒の中断タイムアウト。
+- HTTP失敗、ログインへの遷移、他の注文/ホストへの遷移、未知のHTMLは成功としてキャッシュしない。
+- 既知の空テーブルは空表示とするが、部分応答の可能性があるためキャッシュしない。
+- ページ全体の `/products/` リンクへ広げるフォールバックは禁止。おすすめ商品の混入を防ぐ。
+- 同名商品も行単位で保持し、variantの異なる商品を削除しない。
+- URLは明細URLを基準に解決する。注文/商品はHTTPSのFINDMEだけ、画像はHTTPSのFINDMEまたは `cdn.shopify.com` だけ。
+- DOMは `createElement` / `textContent` で組み立てる。画像のリファラーは送らない。
+- キャッシュキーは `findme:v2:` + 注文URL。形式バージョン・時刻・値の形を検証し、7日以内の空でない結果のみ再利用。旧注文番号キーは無視する。
+- 注文行に処理済み印を付け、スクリプト再実行で行や取得を重複させない。
+
+## 検証
+
+pnpm は package.json の packageManager で固定しています。未導入の場合は `npm install --global pnpm@11.25.0` で指定版を導入してください（npm は pnpm 自体の初回導入にのみ使用）。依存の変更時は pnpm-lock.yaml を更新・コミットし、package-lock.json は作成しません。
+
+```sh
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run check
+pnpm test
+pnpm exec playwright install chromium
+pnpm run test:browser
 ```
-findme-extension/
-├── CLAUDE.md              # このファイル
-├── manifest.json          # Manifest V3 拡張機能定義
-├── content_script.js      # メインロジック（ページに注入）
-└── style.css              # 追加UIのスタイル
-```
 
-## ページのDOMセレクタ情報
+Node.js 22.13 以降と pnpm 11.25.0。Chromium が指定パスにある場合は `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chromium` を設定できる。合成DOMとブラウザは別の検証段階として報告する。実サイトの拡張動作やraw server HTML取得は、別途確認していなければ未検証と明記する。
 
-### 注文一覧ページ (`/account`)
-
-- 注文テーブル: `table.responsive-table`
-- 注文行: `table.responsive-table tbody tr`
-- 注文番号リンク: `th[data-label="注文"] a`（または `td[data-label="注文"] a`）
-- 注文番号テキスト: リンクのinnerText（例: `#1234`）
-- 詳細ページURL: リンクのhref（例: `/account/orders/1234`）
-
-### 注文詳細ページ (`/account/orders/:id`)
-
-- 商品リンク: `table a[href*="/products/"]`（商品名テキストを含む）
-
-## インストール手順
-
-1. `chrome://extensions/` を開く
-2. 右上「デベロッパーモード」をON
-3. 「パッケージ化されていない拡張機能を読み込む」をクリック
-4. このディレクトリ（`findme-extension/`）を選択
-
-## 検証手順
-
-1. `https://findmestore.thinkr.jp/account` にアクセス（要ログイン）
-2. 各注文行の下に商品名が表示されることを確認
-3. ページネーション（`?page=2` 以降）でも動作することを確認
-4. ページ再読み込み時にキャッシュから即座に表示されることを確認
-5. DevToolsのConsoleでエラーがないことを確認
-
-## 機能仕様
-
-- 注文一覧の各行から詳細ページURLを抽出
-- `chrome.storage.local` でフェッチ結果をキャッシュ（注文番号をキー）
-- 詳細ページへの並列フェッチ（最大3件同時）
-- ローディング中は「読み込み中...」を表示
-- エラー時は「取得失敗（再試行）」を表示（クリックで再試行）
+実注文の値・住所・氏名・金額・Cookie・token・HARはfixture、ログ、PRへ追加しない。インストール、マージ、公開、追加API、権限拡大は依頼の範囲を再確認する。
