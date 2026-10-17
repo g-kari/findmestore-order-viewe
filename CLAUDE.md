@@ -50,14 +50,16 @@
 
 ## 検証
 
+pnpm は package.json の packageManager で固定しています。未導入の場合は `npm install --global pnpm@11.25.0` で指定版を導入してください（npm は pnpm 自体の初回導入にのみ使用）。依存の変更時は pnpm-lock.yaml を更新・コミットし、package-lock.json は作成しません。
+
 ```sh
-npm ci --ignore-scripts
-npm run check
-npm test
-npx playwright install chromium
-npm run test:browser
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run check
+pnpm test
+pnpm exec playwright install chromium
+pnpm run test:browser
 ```
 
-Node.js 22 以降。Chromium が指定パスにある場合は `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chromium` を設定できる。合成DOMとブラウザは別の検証段階として報告する。実サイトの拡張動作やraw server HTML取得は、別途確認していなければ未検証と明記する。
+Node.js 22.13 以降と pnpm 11.25.0。Chromium が指定パスにある場合は `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chromium` を設定できる。合成DOMとブラウザは別の検証段階として報告する。実サイトの拡張動作やraw server HTML取得は、別途確認していなければ未検証と明記する。
 
 実注文の値・住所・氏名・金額・Cookie・token・HARはfixture、ログ、PRへ追加しない。インストール、マージ、公開、追加API、権限拡大は依頼の範囲を再確認する。

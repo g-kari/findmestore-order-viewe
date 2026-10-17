@@ -91,18 +91,20 @@ findme-extension/
 
 ## 開発とテスト
 
-Node.js 22 以降を使用します。拡張本体はビルド不要です。テスト依存は拡張の実行に使用しません。
+Node.js 22.13 以降と pnpm 11.25.0 を使用します。拡張本体はビルド不要です。テスト依存は拡張の実行に使用しません。
+
+pnpm は package.json の packageManager で固定しています。未導入の場合は `npm install --global pnpm@11.25.0` で指定版を導入してください（npm は pnpm 自体の初回導入にのみ使用）。依存の変更時は pnpm-lock.yaml を更新・コミットし、package-lock.json は作成しません。
 
 ```sh
-npm ci --ignore-scripts
-npm run check
-npm test
-npx playwright install chromium
-npm run test:browser
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run check
+pnpm test
+pnpm exec playwright install chromium
+pnpm run test:browser
 ```
 
-- `npm test`: jsdom で DOMParser、描画、キャッシュ、取得制御を確認する合成DOMテスト。
-- `npm run test:browser`: Chromium で同じ主要フローを確認するブラウザ回帰テスト。全URLを合成HTMLへ差し替え、外部へのリクエストを遮断します。
+- `pnpm test`: jsdom で DOMParser、描画、キャッシュ、取得制御を確認する合成DOMテスト。
+- `pnpm run test:browser`: Chromium で同じ主要フローを確認するブラウザ回帰テスト。全URLを合成HTMLへ差し替え、外部へのリクエストを遮断します。
 - 必要な場合は `PLAYWRIGHT_CHROMIUM_EXECUTABLE` で既存Chromiumのパスを指定できます。
 - GitHub Actions で構文チェック、合成DOMテスト、Chromium回帰テストを実行します。
 - fixtures の注文・商品・金額・日付はすべて架空です。実注文HTML、Cookie、認証情報、HARを追加しないでください。
