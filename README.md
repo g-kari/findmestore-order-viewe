@@ -91,9 +91,9 @@ findme-extension/
 
 ## 開発とテスト
 
-Node.js 22.13 以降と pnpm 11.25.0 を使用します。拡張本体はビルド不要です。テスト依存は拡張の実行に使用しません。
+Node.js 22.22.2 以降の 22.x、24.15.0 以降の 24.x、または 26.0.0 以降と pnpm 12.15.0 を使用します。拡張本体はビルド不要です。テスト依存は拡張の実行に使用しません。
 
-pnpm は package.json の packageManager で固定しています。未導入の場合は `npm install --global pnpm@11.25.0` で指定版を導入してください（npm は pnpm 自体の初回導入にのみ使用）。依存の変更時は pnpm-lock.yaml を更新・コミットし、package-lock.json は作成しません。
+pnpm は package.json の packageManager で固定しています。未導入の場合は `npm install --global pnpm@12.15.0` で指定版を導入してください（npm は pnpm 自体の初回導入にのみ使用）。依存の変更時は pnpm-lock.yaml を更新・コミットし、package-lock.json は作成しません。
 
 ```sh
 pnpm install --frozen-lockfile --ignore-scripts
