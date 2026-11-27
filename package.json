@@ -8,7 +8,7 @@
     "test:browser": "node --test --test-concurrency=1 tests/browser.test.cjs"
   },
   "devDependencies": {
-    "jsdom": "31.0.0",
+    "jsdom": "31.0.1",
     "playwright": "1.65.0"
   },
   "packageManager": "pnpm@12.20.0",
